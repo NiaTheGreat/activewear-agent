@@ -39,10 +39,9 @@ class SearchCriteria(BaseModel):
         default_factory=list,
         description="Required production capabilities (e.g., sublimation, screen printing)",
     )
-    budget_tier: Optional[str] = Field(
-        default=None,
-        description="Budget category: budget, mid-range, or premium",
-        pattern="^(budget|mid-range|premium)?$",
+    budget_tier: List[str] = Field(
+        default_factory=list,
+        description="Budget categories (can be multiple): budget, mid-range, and/or premium",
     )
     additional_notes: Optional[str] = Field(
         default=None, description="Any additional requirements or preferences"
@@ -143,7 +142,7 @@ class SearchCriteria(BaseModel):
             )
 
         if self.budget_tier:
-            summary_parts.append(f"Budget Tier: {self.budget_tier}")
+            summary_parts.append(f"Budget Tier: {', '.join(self.budget_tier)}")
 
         if self.additional_notes:
             summary_parts.append(f"Notes: {self.additional_notes}")

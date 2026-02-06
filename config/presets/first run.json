@@ -27,7 +27,7 @@
     "anti-shrink treatment",
     "laser cutting"
   ],
-  "budget_tier": "mid-range",
+  "budget_tier": ["mid-range"],
   "additional_notes": "Experience with high impact sports bras required. Easy and affordable sampling process needed to iterate quickly without breaking budget. Goal is to create high quality activewear products.",
   "created_at": "2026-02-05T20:39:25.747004"
 }

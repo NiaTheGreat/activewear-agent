@@ -32,8 +32,8 @@ class CriteriaCollector:
         presets = SearchCriteria.list_presets()
         if presets:
             console.print("[yellow]Available presets:[/yellow]")
-            for preset in presets:
-                console.print(f"  • {preset}")
+            for i, preset in enumerate(presets, 1):
+                console.print(f"  {i}. {preset}")
             console.print()
 
             load_preset = console.input(
@@ -41,18 +41,36 @@ class CriteriaCollector:
             ).lower()
 
             if load_preset == "y":
-                preset_name = console.input("[bold]Enter preset name:[/bold] ")
+                preset_input = console.input(
+                    "[bold]Enter preset number or name:[/bold] "
+                ).strip()
+
+                # Try to parse as number first
+                preset_name = None
                 try:
-                    criteria = SearchCriteria.load_preset(preset_name)
-                    console.print(
-                        f"\n[green]✓ Loaded preset '{preset_name}'[/green]\n"
-                    )
-                    console.print(Panel(criteria.to_summary(), title="Your Criteria"))
-                    return criteria
-                except FileNotFoundError:
-                    console.print(
-                        f"[red]Preset '{preset_name}' not found. Starting fresh...[/red]\n"
-                    )
+                    preset_index = int(preset_input)
+                    if 1 <= preset_index <= len(presets):
+                        preset_name = presets[preset_index - 1]
+                    else:
+                        console.print(
+                            f"[red]Invalid number. Please choose 1-{len(presets)}. Starting fresh...[/red]\n"
+                        )
+                except ValueError:
+                    # Not a number, treat as preset name
+                    preset_name = preset_input
+
+                if preset_name:
+                    try:
+                        criteria = SearchCriteria.load_preset(preset_name)
+                        console.print(
+                            f"\n[green]✓ Loaded preset '{preset_name}'[/green]\n"
+                        )
+                        console.print(Panel(criteria.to_summary(), title="Your Criteria"))
+                        return criteria
+                    except FileNotFoundError:
+                        console.print(
+                            f"[red]Preset '{preset_name}' not found. Starting fresh...[/red]\n"
+                        )
 
         # Start interactive Q&A
         console.print(
@@ -91,7 +109,7 @@ Do NOT ask all questions at once - ask them one by one, waiting for responses.""
             "preferred_certifications": [],
             "materials": [],
             "production_methods": [],
-            "budget_tier": None,
+            "budget_tier": [],
             "additional_notes": None,
         }
 
@@ -172,7 +190,7 @@ Extract and return ONLY a JSON object with these fields:
 - preferred_certifications: array of strings (nice-to-have certifications)
 - materials: array of strings (desired materials)
 - production_methods: array of strings (production capabilities needed)
-- budget_tier: "budget", "mid-range", "premium", or null
+- budget_tier: array of strings (can include "budget", "mid-range", and/or "premium")
 - additional_notes: string or null (any other requirements)
 
 Return ONLY valid JSON, no markdown formatting or explanation."""
@@ -207,6 +225,6 @@ Return ONLY valid JSON, no markdown formatting or explanation."""
                 "preferred_certifications": [],
                 "materials": [],
                 "production_methods": [],
-                "budget_tier": None,
+                "budget_tier": [],
                 "additional_notes": None,
             }

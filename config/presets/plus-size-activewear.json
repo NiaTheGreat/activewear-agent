@@ -1,0 +1,38 @@
+{
+  "locations": [],
+  "moq_min": 100,
+  "moq_max": 500,
+  "required_certifications": [],
+  "preferred_certifications": [
+    "Fair Trade",
+    "OEKO-TEX",
+    "ISO standards"
+  ],
+  "materials": [
+    "polyester",
+    "lycra",
+    "nylon",
+    "spandex blends",
+    "cotton"
+  ],
+  "production_methods": [
+    "seamless knitting",
+    "cut and sew",
+    "flatlock stitching",
+    "moisture wicking treatment",
+    "four-way stretch construction",
+    "sublimation printing",
+    "seamless knitting",
+    "circular knitting",
+    "warp knitting",
+    "anti-microbial treatment",
+    "anti-shrink treatment",
+    "laser cutting"
+  ],
+  "budget_tier": [
+    "mid-range",
+    "premium"
+  ],
+  "additional_notes": "I want availability to sample and iterate over designs. I want to create high impact sport bras for plus sizes, or manufacturers willing to create plus sized units. Leggings, t-shirts, sweatpants, moisture wicking pants, loose shorts, biker shorts, seamless. Focus on plus-size expertise and sampling capabilities.",
+  "created_at": "2026-02-06T10:45:00.000000"
+}

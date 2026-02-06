@@ -213,7 +213,7 @@ Generate 7-10 queries with DIVERSE strategies. Avoid duplicates."""
             criteria_parts.append(f"⚙️ Production Methods: {', '.join(criteria.production_methods)}")
 
         if criteria.budget_tier:
-            criteria_parts.append(f"💰 Budget Tier: {criteria.budget_tier}")
+            criteria_parts.append(f"💰 Budget Tier: {', '.join(criteria.budget_tier)}")
 
         if criteria.additional_notes:
             criteria_parts.append(f"📝 Notes: {criteria.additional_notes}")

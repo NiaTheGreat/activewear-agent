@@ -80,7 +80,7 @@ Extract and return ONLY a JSON object with these fields:
 - preferred_certifications: array of strings (nice-to-have certifications)
 - materials: array of strings (desired materials)
 - production_methods: array of strings (production capabilities needed)
-- budget_tier: "budget", "mid-range", "premium", or null
+- budget_tier: array of strings (can include "budget", "mid-range", and/or "premium")
 - additional_notes: string or null (any other requirements)
 
 Return ONLY valid JSON, no markdown formatting or explanation."""
