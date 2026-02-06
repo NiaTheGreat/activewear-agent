@@ -1,0 +1,29 @@
+DATA QUALITY ISSUES - Manual Research Required
+======================================================================
+Generated: 2026-02-05 23:43:24
+Total URLs: 17
+======================================================================
+
+These manufacturers had data with problematic characters.
+They were excluded from the main report to maintain data quality.
+Research these URLs manually to extract information.
+
+======================================================================
+
+https://thygesenapparel.com/blog/sustainable-activewear-manufacturer
+https://www.eco-stylist.com/guide-to-sustainable-workout-clothes/
+https://impactful.ninja/most-sustainable-activewear-brands/
+https://bowinsgarment.com/the-7-best-custom-clothing-manufacturers-in-china/
+https://publicmyth.com
+https://vietnamactivewearmanufacturers.com
+https://www.manufacturemyproduct.com/international-manufacturing
+https://thepeahen.com/your-ultimate-guide-to-plastic-and-pfas-free-workout-clothes/
+https://chinafitnessclothing.com/wholesale-seamless-clothing-manufacturer/
+https://ensun.io/search/custom-knitwear/china
+https://seamlessclothingmanufacturer.com
+https://guooufashion.com/seamless-knitwear-manufacturing-guide/
+https://ecocult.com/plastic-free-sustainable-activewear-natural-fibers-organic/
+https://tripulse.co/pages/tencel-vs-merino-wool-in-activewear
+https://azknit.com
+https://www.tzstreetwear.com/top-15-best-low-moq-clothing-manufacturers/
+https://www.thegoodtrade.com/features/best-sustainable-activewear/

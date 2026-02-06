@@ -1,0 +1,14 @@
+DATA QUALITY ISSUES - Manual Research Required
+======================================================================
+Generated: 2026-02-05 23:25:12
+Total URLs: 2
+======================================================================
+
+These manufacturers had data with problematic characters.
+They were excluded from the main report to maintain data quality.
+Research these URLs manually to extract information.
+
+======================================================================
+
+https://www.manufacturemyproduct.com/international-manufacturing
+https://seamlessclothingmanufacturer.com

@@ -1,0 +1,16 @@
+DATA QUALITY ISSUES - Manual Research Required
+======================================================================
+Generated: 2026-02-06 00:01:30
+Total URLs: 4
+======================================================================
+
+These manufacturers had data with problematic characters.
+They were excluded from the main report to maintain data quality.
+Research these URLs manually to extract information.
+
+======================================================================
+
+https://www.leelinesports.com/clothing-manufacturers-in-vietnam/
+https://www.manufacturemyproduct.com/international-manufacturing
+https://nichesources.com/low-moq-clothing-manufacturer.html
+https://vietnamactivewearmanufacturers.com
