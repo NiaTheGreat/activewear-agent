@@ -521,3 +521,123 @@ class ExcelGenerator:
         console.print(f"[yellow]✓ Failures report saved to:[/yellow] {output_path}\n")
 
         return output_path
+
+    def rewrite_scores(
+        self,
+        manufacturers: List[Manufacturer],
+        date_added_map: Optional[dict] = None,
+    ) -> Path:
+        """
+        Rewrite the cumulative manufacturers_scores.xlsx with re-scored data.
+
+        Overwrites the file with updated match_score, confidence, and notes
+        while preserving the original Date Added values.
+
+        Args:
+            manufacturers: List of re-evaluated Manufacturer objects (sorted by score)
+            date_added_map: Dict mapping source_url -> original date_added string
+
+        Returns:
+            Path to the rewritten Excel file
+        """
+        cumulative_path = OUTPUT_DIR / "manufacturers_scores.xlsx"
+        date_added_map = date_added_map or {}
+
+        console.print(
+            f"\n[bold cyan]Rewriting Scores[/bold cyan] ({len(manufacturers)} manufacturers)\n"
+        )
+
+        # Create fresh workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Manufacturers"
+
+        # Column headers (same layout as original)
+        headers = [
+            "Rank", "Name", "Location", "Website", "MOQ",
+            "Match Score", "Confidence", "Materials", "Certifications",
+            "Production Methods", "Email", "Phone", "Address",
+            "Notes", "Source URL", "Date Added",
+        ]
+
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill(
+                start_color="366092", end_color="366092", fill_type="solid"
+            )
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # Write data rows
+        central_tz = ZoneInfo("America/Chicago")
+        rescore_timestamp = datetime.now(central_tz).strftime("%Y-%m-%d %H:%M %Z")
+
+        for idx, manufacturer in enumerate(manufacturers, 1):
+            row_data = manufacturer.to_excel_row()
+            row_num = idx + 1
+
+            # Preserve original date_added or mark as rescored
+            original_date = date_added_map.get(manufacturer.source_url, "")
+            if original_date:
+                date_value = f"{original_date} (rescored {rescore_timestamp})"
+            else:
+                date_value = f"Rescored {rescore_timestamp}"
+
+            ws.cell(row=row_num, column=1, value=idx)
+            ws.cell(row=row_num, column=2, value=row_data["Name"])
+            ws.cell(row=row_num, column=3, value=row_data["Location"])
+            ws.cell(row=row_num, column=4, value=row_data["Website"])
+            ws.cell(row=row_num, column=5, value=row_data["MOQ"])
+            ws.cell(row=row_num, column=6, value=row_data["Match Score"])
+            ws.cell(row=row_num, column=7, value=row_data["Confidence"])
+            ws.cell(row=row_num, column=8, value=row_data["Materials"])
+            ws.cell(row=row_num, column=9, value=row_data["Certifications"])
+            ws.cell(row=row_num, column=10, value=row_data["Production Methods"])
+            ws.cell(row=row_num, column=11, value=row_data["Email"])
+            ws.cell(row=row_num, column=12, value=row_data["Phone"])
+            ws.cell(row=row_num, column=13, value=row_data["Address"])
+            ws.cell(row=row_num, column=14, value=row_data["Notes"])
+            ws.cell(row=row_num, column=15, value=row_data["Source URL"])
+            ws.cell(row=row_num, column=16, value=date_value)
+
+            # Color code match scores
+            score_cell = ws.cell(row=row_num, column=6)
+            score = row_data["Match Score"]
+
+            if score >= 70:
+                score_cell.fill = PatternFill(
+                    start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"
+                )
+            elif score >= 50:
+                score_cell.fill = PatternFill(
+                    start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"
+                )
+            else:
+                score_cell.fill = PatternFill(
+                    start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"
+                )
+
+            # Wrap text for notes
+            ws.cell(row=row_num, column=14).alignment = Alignment(wrap_text=True)
+
+        # Adjust column widths
+        column_widths = {
+            "A": 6, "B": 25, "C": 20, "D": 35, "E": 10,
+            "F": 12, "G": 12, "H": 30, "I": 30, "J": 30,
+            "K": 25, "L": 15, "M": 30, "N": 50, "O": 40, "P": 25,
+        }
+        for col, width in column_widths.items():
+            ws.column_dimensions[col].width = width
+
+        # Freeze header row
+        ws.freeze_panes = "A2"
+
+        # Save
+        wb.save(cumulative_path)
+
+        console.print(
+            f"[green]Rescored {len(manufacturers)} manufacturers -> {cumulative_path}[/green]\n"
+        )
+
+        return cumulative_path

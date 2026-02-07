@@ -2,7 +2,7 @@
   "locations": [],
   "moq_min": 100,
   "moq_max": 500,
-  "required_certifications": [],
+  "certifications_of_interest": [],
   "preferred_certifications": [
     "Fair Trade",
     "OEKO-TEX",

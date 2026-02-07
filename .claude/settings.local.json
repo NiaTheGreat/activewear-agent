@@ -4,7 +4,8 @@
       "Bash(python -m venv:*)",
       "Bash(python3:*)",
       "Bash(source:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(PYTHONPATH=\"$PWD/src:$PWD\" venv/bin/python:*)"
     ]
   }
 }

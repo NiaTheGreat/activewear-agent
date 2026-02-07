@@ -41,6 +41,21 @@ def print_welcome():
     console.print(Panel(welcome_text, border_style="cyan", padding=(1, 2)))
 
 
+def ask_mode() -> str:
+    """Ask user which mode to run."""
+    console.print()
+    console.print("[bold]What would you like to do?[/bold]\n")
+    console.print("  [cyan]1[/cyan] - New search (find new manufacturers)")
+    console.print("  [cyan]2[/cyan] - Rescore existing (re-evaluate manufacturers_scores.xlsx)")
+    console.print()
+
+    while True:
+        choice = console.input("[bold]Enter choice (1 or 2):[/bold] ").strip()
+        if choice in ("1", "2"):
+            return choice
+        console.print("[yellow]Please enter 1 or 2.[/yellow]")
+
+
 def main():
     """Main entry point for the application."""
     try:
@@ -50,15 +65,22 @@ def main():
         # Print welcome message
         print_welcome()
 
-        # Import and run agent
+        # Import agent
         from agent.core import ManufacturerResearchAgent
 
         agent = ManufacturerResearchAgent()
-        output_path = agent.run()
+
+        # Ask which mode
+        mode = ask_mode()
+
+        if mode == "2":
+            output_path = agent.rescore()
+        else:
+            output_path = agent.run()
 
         # Success message
         console.print(
-            f"\n[bold green]✓ All done![/bold green] Open your report at:\n  {output_path}\n"
+            f"\n[bold green]All done![/bold green] Open your report at:\n  {output_path}\n"
         )
 
     except ValueError as e:

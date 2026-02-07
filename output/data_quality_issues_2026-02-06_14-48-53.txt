@@ -1,0 +1,13 @@
+DATA QUALITY ISSUES - Manual Research Required
+======================================================================
+Generated: 2026-02-06 14:48:53
+Total URLs: 1
+======================================================================
+
+These manufacturers had data with problematic characters.
+They were excluded from the main report to maintain data quality.
+Research these URLs manually to extract information.
+
+======================================================================
+
+https://athleisurebasics.com

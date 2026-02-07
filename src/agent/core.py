@@ -1,7 +1,7 @@
 """Main agent orchestrator coordinating all workflow phases."""
 
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 from openpyxl import load_workbook
 from rich.console import Console
@@ -10,7 +10,7 @@ from rich.panel import Panel
 from agent.state import AgentState
 from config import OUTPUT_DIR, settings
 from models.criteria import SearchCriteria
-from models.manufacturer import Manufacturer
+from models.manufacturer import ContactInfo, Manufacturer
 from tools.criteria_collector import CriteriaCollector
 from tools.data_extractor import DataExtractor
 from tools.evaluator import Evaluator
@@ -343,6 +343,201 @@ class ManufacturerResearchAgent:
             )
 
         return excel_path
+
+    def rescore(self) -> Path:
+        """
+        Re-score existing manufacturers from the cumulative Excel file.
+
+        Reads manufacturer data from manufacturers_scores.xlsx, lets user
+        pick criteria (preset), re-evaluates with the current scoring algorithm,
+        and rewrites the Excel with updated scores.
+
+        Returns:
+            Path to the updated Excel file
+        """
+        try:
+            self.state = AgentState.RESCORING
+
+            console.print(
+                "\n[bold cyan]Rescore Mode[/bold cyan] - Re-evaluate existing manufacturers\n"
+            )
+
+            # Step 1: Collect or load criteria
+            console.print("[bold]First, select the criteria to score against:[/bold]\n")
+            self.criteria = self._collect_criteria()
+
+            # Step 2: Read manufacturers from Excel
+            manufacturers, date_added_map = self._read_manufacturers_from_excel()
+
+            if not manufacturers:
+                console.print("[yellow]No manufacturers found in Excel. Nothing to rescore.[/yellow]\n")
+                self.state = AgentState.COMPLETE
+                return OUTPUT_DIR / "manufacturers_scores.xlsx"
+
+            console.print(
+                f"[green]Loaded {len(manufacturers)} manufacturers from Excel[/green]\n"
+            )
+
+            # Step 3: Re-evaluate
+            self.state = AgentState.EVALUATING
+            self.manufacturers = self.evaluator.evaluate(manufacturers, self.criteria)
+
+            # Step 4: Rewrite Excel
+            self.state = AgentState.OUTPUTTING
+            self.output_path = self.excel_generator.rewrite_scores(
+                self.manufacturers, date_added_map
+            )
+
+            # Complete
+            self.state = AgentState.COMPLETE
+            self._display_rescore_summary()
+
+            return self.output_path
+
+        except KeyboardInterrupt:
+            console.print("\n\n[yellow]Rescore interrupted by user.[/yellow]\n")
+            self.state = AgentState.ERROR
+            raise
+
+        except Exception as e:
+            console.print(f"\n[red]Error during rescore:[/red] {e}\n")
+            self.state = AgentState.ERROR
+            raise
+
+    def _read_manufacturers_from_excel(self) -> Tuple[List[Manufacturer], Dict[str, str]]:
+        """
+        Read manufacturer data from the cumulative Excel file and reconstruct
+        Manufacturer objects.
+
+        Returns:
+            Tuple of (list of Manufacturer objects, dict mapping source_url to date_added)
+        """
+        cumulative_path = OUTPUT_DIR / "manufacturers_scores.xlsx"
+
+        if not cumulative_path.exists():
+            console.print("[yellow]No manufacturers_scores.xlsx found.[/yellow]\n")
+            return [], {}
+
+        console.print(f"[cyan]Reading manufacturers from {cumulative_path}...[/cyan]")
+
+        wb = load_workbook(cumulative_path, read_only=True)
+        ws = wb.active
+
+        manufacturers = []
+        date_added_map: Dict[str, str] = {}
+
+        for row in range(2, ws.max_row + 1):
+            # Read all columns
+            name = ws.cell(row=row, column=2).value
+            if not name:
+                continue  # Skip empty rows
+
+            location = ws.cell(row=row, column=3).value
+            website = ws.cell(row=row, column=4).value or ""
+            moq_raw = ws.cell(row=row, column=5).value
+            materials_raw = ws.cell(row=row, column=8).value
+            certs_raw = ws.cell(row=row, column=9).value
+            methods_raw = ws.cell(row=row, column=10).value
+            email = ws.cell(row=row, column=11).value
+            phone = ws.cell(row=row, column=12).value
+            address = ws.cell(row=row, column=13).value
+            source_url = ws.cell(row=row, column=15).value or website
+            date_added = ws.cell(row=row, column=16).value
+
+            # Parse MOQ
+            moq = None
+            if moq_raw is not None and moq_raw != "Unknown":
+                try:
+                    moq = int(moq_raw)
+                except (ValueError, TypeError):
+                    pass
+
+            # Parse comma-separated lists
+            def parse_list(raw) -> List[str]:
+                if not raw or raw in ("Unknown", "None listed"):
+                    return []
+                return [item.strip() for item in str(raw).split(",") if item.strip()]
+
+            materials = parse_list(materials_raw)
+            certifications = parse_list(certs_raw)
+            production_methods = parse_list(methods_raw)
+
+            # Clean contact fields
+            clean_email = email if email and email != "Unknown" else None
+            clean_phone = phone if phone and phone != "Unknown" else None
+            clean_address = address if address and address != "Unknown" else None
+            clean_location = location if location and location != "Unknown" else None
+
+            try:
+                manufacturer = Manufacturer(
+                    name=str(name),
+                    website=str(website) if website else str(source_url),
+                    location=clean_location,
+                    contact=ContactInfo(
+                        email=clean_email,
+                        phone=clean_phone,
+                        address=clean_address,
+                    ),
+                    materials=materials,
+                    production_methods=production_methods,
+                    moq=moq,
+                    certifications=certifications,
+                    source_url=str(source_url),
+                )
+                manufacturers.append(manufacturer)
+
+                # Preserve date added
+                if source_url and date_added:
+                    date_added_map[str(source_url)] = str(date_added)
+
+            except Exception as e:
+                console.print(
+                    f"  [yellow]Skipping row {row} ({name}): {e}[/yellow]"
+                )
+
+        wb.close()
+
+        console.print(
+            f"[green]Read {len(manufacturers)} manufacturers from Excel[/green]\n"
+        )
+
+        return manufacturers, date_added_map
+
+    def _display_rescore_summary(self) -> None:
+        """Display summary after rescoring."""
+        summary_lines = [
+            f"[bold]Manufacturers Rescored:[/bold] {len(self.manufacturers)}",
+        ]
+
+        if self.manufacturers:
+            summary_lines.append(
+                f"[bold]Top Match:[/bold] {self.manufacturers[0].name} "
+                f"([green]{self.manufacturers[0].match_score}[/green])"
+            )
+
+            # Score distribution
+            high = sum(1 for m in self.manufacturers if m.match_score >= 70)
+            mid = sum(1 for m in self.manufacturers if 50 <= m.match_score < 70)
+            low = sum(1 for m in self.manufacturers if m.match_score < 50)
+
+            summary_lines.append("")
+            summary_lines.append("[bold cyan]--- Score Distribution ---[/bold cyan]")
+            summary_lines.append(f"  [green]70+:[/green] {high} manufacturers")
+            summary_lines.append(f"  [yellow]50-69:[/yellow] {mid} manufacturers")
+            summary_lines.append(f"  [red]<50:[/red] {low} manufacturers")
+
+        summary_lines.append(f"\n[bold]Report Location:[/bold] {self.output_path}")
+        summary_lines.append("[dim]No API calls were made (local rescore only)[/dim]")
+
+        console.print(
+            Panel(
+                "\n".join(summary_lines),
+                title="[bold green]Rescore Complete[/bold green]",
+                border_style="green",
+                padding=(1, 2),
+            )
+        )
+        console.print()
 
     def _display_summary(self) -> None:
         """Display final summary of results."""

@@ -13,6 +13,7 @@ class AgentState(Enum):
     SCRAPING = auto()
     EVALUATING = auto()
     OUTPUTTING = auto()
+    RESCORING = auto()
     COMPLETE = auto()
     ERROR = auto()
 

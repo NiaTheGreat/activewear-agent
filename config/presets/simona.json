@@ -1,0 +1,22 @@
+{
+  "locations": [
+    "Asia",
+    "North America"
+  ],
+  "moq_min": 100,
+  "moq_max": 500,
+  "certifications_of_interest": [],
+  "preferred_certifications": [],
+  "materials": [
+    "lycra",
+    "polyester blends",
+    "cotton blends",
+    "bamboo"
+  ],
+  "production_methods": [],
+  "budget_tier": [
+    "mid-range"
+  ],
+  "additional_notes": "specialization in activewear is a benefit",
+  "created_at": "2026-02-07T17:04:55.297182"
+}

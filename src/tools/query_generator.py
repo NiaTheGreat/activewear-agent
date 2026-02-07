@@ -203,8 +203,8 @@ Generate 7-10 queries with DIVERSE strategies. Avoid duplicates."""
                 moq_str.append(f"max: {criteria.moq_max}")
             criteria_parts.append(f"📦 MOQ: {', '.join(moq_str)}")
 
-        if criteria.required_certifications:
-            criteria_parts.append(f"✅ Required Certifications: {', '.join(criteria.required_certifications)}")
+        if criteria.certifications_of_interest:
+            criteria_parts.append(f"✅ Certifications of Interest: {', '.join(criteria.certifications_of_interest)}")
 
         if criteria.materials:
             criteria_parts.append(f"🧵 Materials: {', '.join(criteria.materials)}")
@@ -253,8 +253,8 @@ Return the JSON object with queries and their strategies."""
             )
 
         # Strategy 3: Certification-focused
-        if criteria.required_certifications:
-            cert = criteria.required_certifications[0]
+        if criteria.certifications_of_interest:
+            cert = criteria.certifications_of_interest[0]
             queries.append(f'"{cert} certified" activewear manufacturers directory')
 
         # Strategy 4: Production method specific

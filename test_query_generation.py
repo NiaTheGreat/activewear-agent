@@ -29,7 +29,7 @@ def main():
         locations=["USA", "Vietnam"],
         moq_min=500,
         moq_max=2000,
-        required_certifications=["OEKO-TEX"],
+        certifications_of_interest=["OEKO-TEX"],
         materials=["recycled polyester", "organic cotton"],
         production_methods=["sublimation printing"],
         budget_tier="mid-range"

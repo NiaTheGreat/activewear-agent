@@ -82,7 +82,7 @@ class CriteriaCollector:
 Ask the user questions ONE AT A TIME to gather the following information:
 1. Preferred manufacturing locations (countries/regions)
 2. Minimum Order Quantity (MOQ) range (min and max)
-3. Required certifications (e.g., GOTS, OEKO-TEX, Fair Trade)
+3. Certifications of interest (e.g., GOTS, OEKO-TEX, Fair Trade)
 4. Preferred certifications (nice to have)
 5. Desired materials (e.g., recycled polyester, organic cotton)
 6. Required production methods (e.g., sublimation printing, screen printing)
@@ -105,7 +105,7 @@ Do NOT ask all questions at once - ask them one by one, waiting for responses.""
             "locations": [],
             "moq_min": None,
             "moq_max": None,
-            "required_certifications": [],
+            "certifications_of_interest": [],
             "preferred_certifications": [],
             "materials": [],
             "production_methods": [],
@@ -186,7 +186,7 @@ Extract and return ONLY a JSON object with these fields:
 - locations: array of strings (countries/regions mentioned)
 - moq_min: integer or null (minimum MOQ mentioned)
 - moq_max: integer or null (maximum MOQ mentioned)
-- required_certifications: array of strings (must-have certifications)
+- certifications_of_interest: array of strings (certifications of interest)
 - preferred_certifications: array of strings (nice-to-have certifications)
 - materials: array of strings (desired materials)
 - production_methods: array of strings (production capabilities needed)
@@ -221,7 +221,7 @@ Return ONLY valid JSON, no markdown formatting or explanation."""
                 "locations": [],
                 "moq_min": None,
                 "moq_max": None,
-                "required_certifications": [],
+                "certifications_of_interest": [],
                 "preferred_certifications": [],
                 "materials": [],
                 "production_methods": [],

@@ -1,9 +1,9 @@
 """Manufacturer data model."""
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class ContactInfo(BaseModel):
@@ -55,6 +55,12 @@ class Manufacturer(BaseModel):
     )
     notes: Optional[str] = Field(
         default=None, description="Strengths, weaknesses, or other observations"
+    )
+    moq_description: Optional[str] = Field(
+        default=None, description="Text-based MOQ info (e.g., 'Flexible', 'Low MOQ', 'Negotiable')"
+    )
+    website_signals: Optional[Dict[str, Any]] = Field(
+        default=None, description="Bonus signals extracted from website (testimonials, factory photos, years in business, etc.)"
     )
     source_url: str = Field(description="URL where data was scraped from")
     scraped_at: datetime = Field(

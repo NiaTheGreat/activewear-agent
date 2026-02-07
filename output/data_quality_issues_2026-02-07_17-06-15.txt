@@ -1,0 +1,14 @@
+DATA QUALITY ISSUES - Manual Research Required
+======================================================================
+Generated: 2026-02-07 17:06:15
+Total URLs: 2
+======================================================================
+
+These manufacturers had data with problematic characters.
+They were excluded from the main report to maintain data quality.
+Research these URLs manually to extract information.
+
+======================================================================
+
+https://www.leelinesports.com/best-sportswear-manufacturers-in-china/
+https://chinafitnessclothing.com/hub/activewear-manufacturers-for-startups/

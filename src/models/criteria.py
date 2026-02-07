@@ -3,9 +3,9 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from config import PRESETS_DIR
 
@@ -23,9 +23,9 @@ class SearchCriteria(BaseModel):
     moq_max: Optional[int] = Field(
         default=None, description="Maximum order quantity (upper bound)", ge=0
     )
-    required_certifications: List[str] = Field(
+    certifications_of_interest: List[str] = Field(
         default_factory=list,
-        description="Must-have certifications (e.g., GOTS, OEKO-TEX, Fair Trade)",
+        description="Certifications of interest (e.g., GOTS, OEKO-TEX, Fair Trade). Used for informational purposes, not penalty-based scoring.",
     )
     preferred_certifications: List[str] = Field(
         default_factory=list,
@@ -47,6 +47,17 @@ class SearchCriteria(BaseModel):
         default=None, description="Any additional requirements or preferences"
     )
     created_at: datetime = Field(default_factory=datetime.now)
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_deprecated_fields(cls, data: Any) -> Any:
+        """Map deprecated 'required_certifications' to 'certifications_of_interest'."""
+        if isinstance(data, dict):
+            if "required_certifications" in data and "certifications_of_interest" not in data:
+                data["certifications_of_interest"] = data.pop("required_certifications")
+            elif "required_certifications" in data:
+                data.pop("required_certifications")
+        return data
 
     def save_preset(self, name: str) -> Path:
         """
@@ -123,9 +134,9 @@ class SearchCriteria(BaseModel):
                 moq_range.append(f"max: {self.moq_max}")
             summary_parts.append(f"MOQ: {', '.join(moq_range)}")
 
-        if self.required_certifications:
+        if self.certifications_of_interest:
             summary_parts.append(
-                f"Required Certs: {', '.join(self.required_certifications)}"
+                f"Certifications of Interest: {', '.join(self.certifications_of_interest)}"
             )
 
         if self.preferred_certifications:
