@@ -17,11 +17,47 @@ import {
   PRODUCTION_METHODS,
   BUDGET_TIERS,
 } from "@/lib/constants";
-import { Loader2, MapPin, Award, Layers, Scissors, DollarSign } from "lucide-react";
+import { Loader2, MapPin, Award, Layers, Scissors, DollarSign, Plus, X } from "lucide-react";
 
 interface CriteriaFormProps {
   onSubmit: (criteria: SearchCriteria, mode: string, maxManufacturers: number) => void;
   isLoading?: boolean;
+}
+
+function CustomInput({
+  placeholder,
+  onAdd,
+}: {
+  placeholder: string;
+  onAdd: (value: string) => void;
+}) {
+  const [value, setValue] = useState("");
+  const handleAdd = () => {
+    const trimmed = value.trim();
+    if (trimmed) {
+      onAdd(trimmed);
+      setValue("");
+    }
+  };
+  return (
+    <div className="flex gap-2 mt-3">
+      <Input
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleAdd();
+          }
+        }}
+        className="flex-1"
+      />
+      <Button type="button" variant="outline" size="sm" onClick={handleAdd} disabled={!value.trim()}>
+        <Plus className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 }
 
 export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
@@ -46,6 +82,26 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
       list.includes(item) ? list.filter((i) => i !== item) : [...list, item]
     );
   };
+
+  const addCustomItem = (
+    list: string[],
+    setList: (v: string[]) => void,
+    item: string
+  ) => {
+    if (!list.includes(item)) {
+      setList([...list, item]);
+    }
+  };
+
+  const presetLocations = LOCATIONS as readonly string[];
+  const presetCertifications = CERTIFICATIONS as readonly string[];
+  const presetMaterials = MATERIALS as readonly string[];
+  const presetMethods = PRODUCTION_METHODS as readonly string[];
+
+  const customLocations = locations.filter((l) => !presetLocations.includes(l));
+  const customCertifications = certifications.filter((c) => !presetCertifications.includes(c));
+  const customMaterials = materials.filter((m) => !presetMaterials.includes(m));
+  const customMethods = productionMethods.filter((m) => !presetMethods.includes(m));
 
   const loadPreset = (criteria: SearchCriteria) => {
     setLocations(criteria.locations || []);
@@ -115,7 +171,22 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
                 {loc}
               </button>
             ))}
+            {customLocations.map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => toggleItem(locations, setLocations, loc)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition-all bg-primary-100 text-primary-700 ring-1 ring-primary-300 flex items-center gap-1"
+              >
+                {loc}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
           </div>
+          <CustomInput
+            placeholder="Add custom location..."
+            onAdd={(v) => addCustomItem(locations, setLocations, v)}
+          />
         </CardContent>
       </Card>
 
@@ -183,7 +254,25 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
                 <span className="text-sm text-gray-700">{cert}</span>
               </label>
             ))}
+            {customCertifications.map((cert) => (
+              <label
+                key={cert}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Checkbox
+                  checked
+                  onCheckedChange={() =>
+                    toggleItem(certifications, setCertifications, cert)
+                  }
+                />
+                <span className="text-sm text-primary-700 font-medium">{cert}</span>
+              </label>
+            ))}
           </div>
+          <CustomInput
+            placeholder="Add custom certification..."
+            onAdd={(v) => addCustomItem(certifications, setCertifications, v)}
+          />
         </CardContent>
       </Card>
 
@@ -211,7 +300,22 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
                 {mat}
               </button>
             ))}
+            {customMaterials.map((mat) => (
+              <button
+                key={mat}
+                type="button"
+                onClick={() => toggleItem(materials, setMaterials, mat)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition-all bg-primary-100 text-primary-700 ring-1 ring-primary-300 flex items-center gap-1"
+              >
+                {mat}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
           </div>
+          <CustomInput
+            placeholder="Add custom material..."
+            onAdd={(v) => addCustomItem(materials, setMaterials, v)}
+          />
         </CardContent>
       </Card>
 
@@ -241,7 +345,24 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
                 {method}
               </button>
             ))}
+            {customMethods.map((method) => (
+              <button
+                key={method}
+                type="button"
+                onClick={() =>
+                  toggleItem(productionMethods, setProductionMethods, method)
+                }
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition-all bg-primary-100 text-primary-700 ring-1 ring-primary-300 flex items-center gap-1"
+              >
+                {method}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
           </div>
+          <CustomInput
+            placeholder="Add custom production method..."
+            onAdd={(v) => addCustomItem(productionMethods, setProductionMethods, v)}
+          />
         </CardContent>
       </Card>
 
