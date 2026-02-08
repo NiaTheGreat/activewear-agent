@@ -1,11 +1,17 @@
 """Wraps the existing CLI agent for use as an async background service."""
 
 import asyncio
+import logging
+import re
 import sys
+import traceback
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -15,6 +21,19 @@ from app.models.search import Search as DBSearch
 
 # Path to the agent source code (resolved once, imported lazily)
 _AGENT_ROOT = Path(__file__).resolve().parent.parent.parent.parent  # project root
+
+
+def _clean_name(name: str | None, url: str | None) -> str:
+    """Return a readable name; fall back to the URL domain if the name is garbled."""
+    if name and name.isprintable() and not re.search(r'[\x00-\x08\x0e-\x1f\x7f-\x9f\ufffd]', name):
+        return name
+    if url:
+        domain = urlparse(url).netloc or urlparse(url).path
+        domain = domain.removeprefix("www.")
+        # "knitwear.io" -> "Knitwear"
+        label = domain.split(".")[0]
+        return label.replace("-", " ").title()
+    return "Unknown Manufacturer"
 
 
 def _ensure_agent_path() -> None:
@@ -54,7 +73,10 @@ async def run_agent_search(
     virtualenv — they only need to be importable at search time.
     """
     try:
+        logger.info("[%s] run_agent_search ENTERED", search_id)
+
         # -- Mark as running ------------------------------------------------
+        logger.info("[%s] Updating status to 'running'", search_id)
         await _update_search(
             session_factory,
             search_id,
@@ -64,18 +86,32 @@ async def run_agent_search(
             current_detail="Preparing search criteria",
             started_at=datetime.now(timezone.utc),
         )
+        logger.info("[%s] Status updated to 'running'", search_id)
 
         # Lazy-import agent modules
+        logger.info("[%s] Ensuring agent path...", search_id)
         _ensure_agent_path()
+        logger.info("[%s] Agent path: src=%s, root=%s", search_id, _AGENT_ROOT / "src", _AGENT_ROOT)
+        logger.info("[%s] sys.path[0:3] = %s", search_id, sys.path[:3])
+
+        logger.info("[%s] Importing agent modules...", search_id)
         from models.criteria import SearchCriteria as AgentSearchCriteria
+        logger.info("[%s] Imported SearchCriteria", search_id)
         from tools.query_generator import QueryGenerator
+        logger.info("[%s] Imported QueryGenerator", search_id)
         from tools.web_searcher import WebSearcher
+        logger.info("[%s] Imported WebSearcher", search_id)
         from tools.web_scraper import WebScraper
+        logger.info("[%s] Imported WebScraper", search_id)
         from tools.data_extractor import DataExtractor
+        logger.info("[%s] Imported DataExtractor", search_id)
         from tools.evaluator import Evaluator
+        logger.info("[%s] All agent modules imported OK", search_id)
 
         # Build the agent-native criteria model
+        logger.info("[%s] Building criteria from dict: %s", search_id, criteria_dict)
         criteria = AgentSearchCriteria(**criteria_dict)
+        logger.info("[%s] Criteria built: %s", search_id, criteria)
 
         # -- Phase 1: Generate queries --------------------------------------
         await _update_search(
@@ -198,7 +234,7 @@ async def run_agent_search(
             for mfg in manufacturers:
                 db_mfg = DBManufacturer(
                     search_id=search_id,
-                    name=mfg.name,
+                    name=_clean_name(mfg.name, mfg.website or mfg.source_url),
                     website=mfg.website,
                     location=mfg.location,
                     contact={
@@ -235,6 +271,7 @@ async def run_agent_search(
         )
 
     except Exception as exc:
+        logger.error("Search %s failed: %s\n%s", search_id, exc, traceback.format_exc())
         await _update_search(
             session_factory,
             search_id,

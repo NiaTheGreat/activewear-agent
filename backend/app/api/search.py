@@ -1,7 +1,10 @@
 import asyncio
+import logging
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,9 +34,10 @@ async def start_search(
         status="pending",
     )
     db.add(search)
-    await db.flush()
+    await db.commit()
 
     # Schedule the heavy agent work as a background task
+    logger.info("Scheduling background search task for search_id=%s", search.id)
     background_tasks.add_task(
         _run_search_wrapper,
         search_id=search.id,
@@ -50,7 +54,12 @@ async def _run_search_wrapper(
     max_manufacturers: int,
 ) -> None:
     """Thin wrapper so BackgroundTasks can call the async agent service."""
-    await run_agent_search(async_session_factory, search_id, criteria_dict, max_manufacturers)
+    logger.info("Background task STARTED for search_id=%s", search_id)
+    try:
+        await run_agent_search(async_session_factory, search_id, criteria_dict, max_manufacturers)
+        logger.info("Background task COMPLETED for search_id=%s", search_id)
+    except Exception as exc:
+        logger.error("Background task CRASHED for search_id=%s: %s", search_id, exc, exc_info=True)
 
 
 @router.get("/{search_id}/status", response_model=SearchStatus)
