@@ -5,7 +5,12 @@
       "Bash(python3:*)",
       "Bash(source:*)",
       "Bash(pip install:*)",
-      "Bash(PYTHONPATH=\"$PWD/src:$PWD\" venv/bin/python:*)"
+      "Bash(PYTHONPATH=\"$PWD/src:$PWD\" venv/bin/python:*)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(curl:*)",
+      "Bash(kill:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)"
     ]
   }
 }
