@@ -9,7 +9,7 @@ from sqlalchemy import engine_from_config, pool
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.database import Base
-from app.models import User, CriteriaPreset, Search, Manufacturer  # noqa: F401 – register models
+from app.models import User, CriteriaPreset, Search, Manufacturer, ContactActivity  # noqa: F401 – register models
 
 config = context.config
 

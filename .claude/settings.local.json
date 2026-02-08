@@ -14,7 +14,9 @@
       "Bash(npx --yes create-next-app@latest:*)",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

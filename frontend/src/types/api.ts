@@ -87,6 +87,8 @@ export interface Manufacturer {
   user_tags: string[] | null;
   is_favorite: boolean;
   contacted_at: string | null;
+  status: string | null;
+  next_followup_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -107,4 +109,74 @@ export interface ManufacturerUpdate {
   user_tags?: string[];
   is_favorite?: boolean;
   contacted_at?: string;
+  status?: string | null;
+  next_followup_date?: string | null;
+  // Data fields
+  name?: string;
+  website?: string;
+  location?: string | null;
+  contact?: Record<string, string> | null;
+  materials?: string[] | null;
+  production_methods?: string[] | null;
+  certifications?: string[] | null;
+  moq?: number | null;
+  moq_description?: string | null;
+  notes?: string | null;
+}
+
+export interface ManufacturerCreate {
+  name: string;
+  website?: string;
+  location?: string;
+  contact?: Record<string, string>;
+  materials?: string[];
+  production_methods?: string[];
+  certifications?: string[];
+  moq?: number;
+  moq_description?: string;
+  notes?: string;
+}
+
+export type ActivityType =
+  | "email"
+  | "call"
+  | "meeting"
+  | "quote_received"
+  | "sample_requested"
+  | "note";
+
+export type ManufacturerStatus =
+  | "new"
+  | "contacted"
+  | "quoted"
+  | "negotiating"
+  | "won"
+  | "lost";
+
+export interface ContactActivity {
+  id: string;
+  manufacturer_id: string;
+  user_id: string;
+  activity_type: ActivityType;
+  subject: string;
+  content: string | null;
+  contact_date: string;
+  reminder_date: string | null;
+  created_at: string;
+}
+
+export interface ContactActivityCreate {
+  activity_type: ActivityType;
+  subject: string;
+  content?: string;
+  contact_date: string;
+  reminder_date?: string;
+}
+
+export interface ContactActivityUpdate {
+  activity_type?: ActivityType;
+  subject?: string;
+  content?: string | null;
+  contact_date?: string;
+  reminder_date?: string | null;
 }

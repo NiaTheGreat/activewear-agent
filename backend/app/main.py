@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, manufacturers, presets, search
+from app.api import activities, auth, manufacturers, presets, search
 from app.config import settings
 
 # Configure logging with Central Time timestamps
@@ -47,6 +47,7 @@ app.include_router(auth.router)
 app.include_router(presets.router)
 app.include_router(search.router)
 app.include_router(manufacturers.router)
+app.include_router(activities.router)
 
 
 @app.get("/api/health")

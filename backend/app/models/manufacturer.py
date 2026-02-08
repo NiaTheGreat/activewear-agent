@@ -13,6 +13,7 @@ class Manufacturer(Base):
     __table_args__ = (
         Index("ix_manufacturers_search_score", "search_id", "match_score"),
         Index("ix_manufacturers_favorite", "search_id", "is_favorite"),
+        Index("ix_manufacturers_status", "status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -36,6 +37,8 @@ class Manufacturer(Base):
     user_tags: Mapped[list | None] = mapped_column(JSONB)
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False)
     contacted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str | None] = mapped_column(String(20), default=None)
+    next_followup_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -44,3 +47,4 @@ class Manufacturer(Base):
     )
 
     search = relationship("Search", back_populates="manufacturers")
+    activities = relationship("ContactActivity", back_populates="manufacturer", cascade="all, delete-orphan")

@@ -10,6 +10,7 @@ import {
   Bookmark,
   Factory,
   Heart,
+  Kanban,
 } from "lucide-react";
 
 const navItems = [
@@ -17,6 +18,7 @@ const navItems = [
   { href: "/search/new", label: "New Search", icon: Search },
   { href: "/manufacturers", label: "All Manufacturers", icon: Factory },
   { href: "/favorites", label: "Favorites", icon: Heart },
+  { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/history", label: "History", icon: Clock },
   { href: "/presets", label: "Presets", icon: Bookmark },
 ];

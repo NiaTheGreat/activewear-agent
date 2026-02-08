@@ -13,7 +13,7 @@ from app.database import get_db
 from app.models.manufacturer import Manufacturer
 from app.models.search import Search
 from app.models.user import User
-from app.schemas.manufacturer import ManufacturerResponse, ManufacturerUpdate
+from app.schemas.manufacturer import ManufacturerCreate, ManufacturerResponse, ManufacturerUpdate
 
 router = APIRouter(tags=["manufacturers"])
 
@@ -114,6 +114,63 @@ async def export_manufacturers_csv(
     )
 
 
+@router.post(
+    "/api/manufacturers/manual",
+    response_model=ManufacturerResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_manual_manufacturer(
+    body: ManufacturerCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually add a manufacturer (not from a search) and place it in the pipeline."""
+    # Find or create a "manual_entry" search container for this user
+    result = await db.execute(
+        select(Search).where(
+            Search.user_id == current_user.id,
+            Search.search_mode == "manual_entry",
+        )
+    )
+    manual_search = result.scalar_one_or_none()
+
+    if manual_search is None:
+        from datetime import datetime, timezone
+
+        manual_search = Search(
+            user_id=current_user.id,
+            criteria={},
+            search_mode="manual_entry",
+            status="completed",
+            progress=100,
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
+        )
+        db.add(manual_search)
+        await db.flush()
+
+    mfg = Manufacturer(
+        search_id=manual_search.id,
+        name=body.name.strip(),
+        website=body.website.strip() if body.website else "",
+        location=body.location,
+        contact=body.contact,
+        materials=body.materials,
+        production_methods=body.production_methods,
+        certifications=body.certifications,
+        moq=body.moq,
+        moq_description=body.moq_description,
+        notes=body.notes,
+        source_url="manual_entry",
+        confidence="manual",
+        match_score=0.0,
+        status="new",
+    )
+    db.add(mfg)
+    await db.flush()
+    return mfg
+
+
 @router.get(
     "/api/search/{search_id}/manufacturers",
     response_model=list[ManufacturerResponse],
@@ -169,7 +226,7 @@ async def update_manufacturer(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update user-editable fields (notes, tags, favorite, contacted_at)."""
+    """Update manufacturer fields."""
     mfg = await _get_owned_manufacturer(db, manufacturer_id, current_user.id)
     update_data = body.model_dump(exclude_unset=True)
     for field, value in update_data.items():
