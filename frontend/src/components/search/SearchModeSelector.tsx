@@ -1,6 +1,5 @@
 "use client";
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -39,22 +38,31 @@ export function SearchModeSelector({
   onChange,
 }: SearchModeSelectorProps) {
   return (
-    <Tabs value={value} onValueChange={onChange}>
-      <TabsList className="grid w-full grid-cols-3">
-        {modes.map((mode) => (
+    <div className="grid w-full grid-cols-3 gap-1 rounded-lg bg-gray-100 p-1">
+      {modes.map((mode) => {
+        const isActive = value === mode.value;
+        return (
           <Tooltip key={mode.value}>
             <TooltipTrigger asChild>
-              <TabsTrigger value={mode.value} className="gap-2">
+              <button
+                type="button"
+                onClick={() => onChange(mode.value)}
+                className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-primary-600 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
                 <mode.icon className="h-4 w-4" />
                 {mode.label}
-              </TabsTrigger>
+              </button>
             </TooltipTrigger>
             <TooltipContent>
               <p>{mode.description}</p>
             </TooltipContent>
           </Tooltip>
-        ))}
-      </TabsList>
-    </Tabs>
+        );
+      })}
+    </div>
   );
 }

@@ -226,45 +226,52 @@ class WebSearcher:
         """
         cleaned = []
         seen_domains = set()
+        seen_urls = set()
+
+        # B2B platforms host many suppliers on one domain — deduplicate
+        # by full URL path instead of just the domain for these sites.
+        b2b_platforms = ["alibaba", "indiamart", "made-in-china", "globalsources"]
+
+        # Skip non-manufacturer domains (social media, search engines)
+        skip_domains = [
+            "google",
+            "facebook",
+            "linkedin",
+            "instagram",
+            "twitter",
+            "youtube",
+            "pinterest",
+            "reddit",
+            "wikipedia",
+        ]
 
         for url in urls:
             try:
                 parsed = urlparse(url)
-                domain = parsed.netloc.lower()
-
-                # Remove www. prefix for deduplication
-                domain = domain.replace("www.", "")
-
-                # Skip if we've already seen this domain
-                if domain in seen_domains:
-                    continue
-
-                # Skip non-manufacturer domains
-                skip_domains = [
-                    "google",
-                    "facebook",
-                    "linkedin",
-                    "instagram",
-                    "twitter",
-                    "youtube",
-                    "pinterest",
-                    "reddit",
-                    "wikipedia",
-                    "amazon",
-                    "alibaba",
-                    "ebay",
-                ]
+                domain = parsed.netloc.lower().replace("www.", "")
 
                 if any(skip in domain for skip in skip_domains):
                     continue
+
+                is_b2b = any(plat in domain for plat in b2b_platforms)
 
                 # Clean up URL
                 clean_url = f"{parsed.scheme}://{parsed.netloc}"
                 if parsed.path and parsed.path != "/":
                     clean_url += parsed.path
 
+                if is_b2b:
+                    # For B2B platforms, deduplicate by full URL (each path = different supplier)
+                    if clean_url in seen_urls:
+                        continue
+                    seen_urls.add(clean_url)
+                else:
+                    # For standalone sites, deduplicate by domain
+                    if domain in seen_domains:
+                        continue
+                    seen_domains.add(domain)
+
                 cleaned.append(clean_url)
-                seen_domains.add(domain)
 
             except Exception:
                 continue

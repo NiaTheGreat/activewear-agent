@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { CriteriaForm } from "@/components/search/CriteriaForm";
 import { useStartSearch } from "@/hooks/useSearch";
+import { api } from "@/lib/api";
 import type { SearchCriteria } from "@/types/api";
 
 export default function NewSearchPage() {
@@ -14,9 +15,18 @@ export default function NewSearchPage() {
   const handleSubmit = async (
     criteria: SearchCriteria,
     mode: string,
-    maxManufacturers: number
+    maxManufacturers: number,
+    presetName?: string
   ) => {
     try {
+      if (presetName) {
+        await api.presets.create({
+          name: presetName,
+          criteria: criteria as Record<string, unknown>,
+        });
+        toast.success(`Preset "${presetName}" saved!`);
+      }
+
       const result = (await startSearch.mutateAsync({
         criteria: criteria as Record<string, unknown>,
         search_mode: mode,

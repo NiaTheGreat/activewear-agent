@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScoringBreakdown } from "./ScoringBreakdown";
 import { FavoriteButton } from "./FavoriteButton";
-import { useUpdateManufacturer } from "@/hooks/useManufacturers";
+import { useUpdateManufacturer, useDeleteManufacturer } from "@/hooks/useManufacturers";
 import type { Manufacturer } from "@/types/api";
 import {
   Globe,
@@ -30,6 +30,7 @@ import {
   ExternalLink,
   Save,
   Tag,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -48,6 +49,18 @@ export function ManufacturerCard({
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(mfg.user_tags || []);
   const updateMfg = useUpdateManufacturer();
+  const deleteMfg = useDeleteManufacturer();
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete "${mfg.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteMfg.mutateAsync(mfg.id);
+      toast.success("Manufacturer deleted");
+      onClose();
+    } catch {
+      toast.error("Failed to delete manufacturer");
+    }
+  };
 
   const handleSaveNotes = async () => {
     try {
@@ -322,6 +335,21 @@ export function ManufacturerCard({
             >
               <Save className="mr-1 h-3 w-3" />
               Save Notes
+            </Button>
+          </div>
+
+          <Separator />
+
+          {/* Delete */}
+          <div className="flex justify-end">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleteMfg.isPending}
+            >
+              <Trash2 className="mr-1 h-3 w-3" />
+              Delete Manufacturer
             </Button>
           </div>
         </div>

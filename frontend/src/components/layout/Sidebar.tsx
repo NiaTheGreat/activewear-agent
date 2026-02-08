@@ -8,11 +8,15 @@ import {
   Search,
   Clock,
   Bookmark,
+  Factory,
+  Heart,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/search/new", label: "New Search", icon: Search },
+  { href: "/manufacturers", label: "All Manufacturers", icon: Factory },
+  { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/history", label: "History", icon: Clock },
   { href: "/presets", label: "Presets", icon: Bookmark },
 ];

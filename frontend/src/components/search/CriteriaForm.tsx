@@ -17,10 +17,10 @@ import {
   PRODUCTION_METHODS,
   BUDGET_TIERS,
 } from "@/lib/constants";
-import { Loader2, MapPin, Award, Layers, Scissors, DollarSign, Plus, X } from "lucide-react";
+import { Loader2, MapPin, Award, Layers, Scissors, DollarSign, Plus, X, Save } from "lucide-react";
 
 interface CriteriaFormProps {
-  onSubmit: (criteria: SearchCriteria, mode: string, maxManufacturers: number) => void;
+  onSubmit: (criteria: SearchCriteria, mode: string, maxManufacturers: number, presetName?: string) => void;
   isLoading?: boolean;
 }
 
@@ -72,6 +72,8 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
   const [customQueries, setCustomQueries] = useState("");
   const [searchMode, setSearchMode] = useState("auto");
   const [maxManufacturers, setMaxManufacturers] = useState(10);
+  const [saveAsPreset, setSaveAsPreset] = useState(false);
+  const [presetName, setPresetName] = useState("");
 
   const toggleItem = (
     list: string[],
@@ -132,7 +134,7 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
         ? customQueries.split("\n").filter(Boolean)
         : undefined,
     };
-    onSubmit(criteria, searchMode, maxManufacturers);
+    onSubmit(criteria, searchMode, maxManufacturers, saveAsPreset && presetName.trim() ? presetName.trim() : undefined);
   };
 
   return (
@@ -146,6 +148,23 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
         <Label>Search Mode</Label>
         <SearchModeSelector value={searchMode} onChange={setSearchMode} />
       </div>
+
+      {/* Custom Queries (shown for manual/hybrid, right below mode selector) */}
+      {(searchMode === "manual" || searchMode === "hybrid") && (
+        <div className="space-y-2">
+          <Label htmlFor="customQueries">Custom Search Queries</Label>
+          <Textarea
+            id="customQueries"
+            placeholder="Enter one query per line..."
+            value={customQueries}
+            onChange={(e) => setCustomQueries(e.target.value)}
+            rows={4}
+          />
+          <p className="text-xs text-gray-500">
+            Enter one search query per line. These will be used to find manufacturers.
+          </p>
+        </div>
+      )}
 
       {/* Locations */}
       <Card>
@@ -396,23 +415,6 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
         </CardContent>
       </Card>
 
-      {/* Custom Queries (shown for manual/hybrid) */}
-      {(searchMode === "manual" || searchMode === "hybrid") && (
-        <div className="space-y-2">
-          <Label htmlFor="customQueries">Custom Search Queries</Label>
-          <Textarea
-            id="customQueries"
-            placeholder="Enter one query per line..."
-            value={customQueries}
-            onChange={(e) => setCustomQueries(e.target.value)}
-            rows={4}
-          />
-          <p className="text-xs text-gray-500">
-            Enter one search query per line. These will be used to find manufacturers.
-          </p>
-        </div>
-      )}
-
       {/* Additional Notes */}
       <div className="space-y-2">
         <Label htmlFor="notes">Additional Notes</Label>
@@ -439,7 +441,32 @@ export function CriteriaForm({ onSubmit, isLoading }: CriteriaFormProps) {
         />
       </div>
 
-      <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+      {/* Save as Preset */}
+      <Card>
+        <CardContent className="pt-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <Checkbox
+              checked={saveAsPreset}
+              onCheckedChange={(checked) => setSaveAsPreset(checked === true)}
+            />
+            <div className="flex items-center gap-2">
+              <Save className="h-4 w-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Save criteria as a preset</span>
+            </div>
+          </label>
+          {saveAsPreset && (
+            <div className="mt-3 ml-7">
+              <Input
+                placeholder="Preset name (e.g. China Seamless Budget)"
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Button type="submit" size="lg" className="w-full" disabled={isLoading || (saveAsPreset && !presetName.trim())}>
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {isLoading ? "Starting Search..." : "Start Search"}
       </Button>
