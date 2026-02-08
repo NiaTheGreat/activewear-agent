@@ -27,10 +27,14 @@ handler.setFormatter(formatter)
 logging.basicConfig(level=logging.INFO, handlers=[handler])
 logging.getLogger("app").setLevel(logging.DEBUG)
 
+_is_prod = settings.ENVIRONMENT == "production"
+
 app = FastAPI(
     title="Manufacturer Research Agent API",
     version="1.0.0",
     description="API backend for the activewear manufacturer research agent",
+    docs_url=None if _is_prod else "/docs",
+    redoc_url=None if _is_prod else "/redoc",
 )
 
 # CORS

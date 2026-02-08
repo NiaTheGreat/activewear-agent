@@ -165,7 +165,12 @@ export default function PresetsPage() {
       parts.push(`${criteria.materials.length} materials`);
     if (criteria.certifications_of_interest?.length)
       parts.push(`${criteria.certifications_of_interest.length} certs`);
-    if (criteria.budget_tier) parts.push(criteria.budget_tier);
+    if (criteria.budget_tier) {
+      const tier = Array.isArray(criteria.budget_tier)
+        ? criteria.budget_tier.join(", ")
+        : criteria.budget_tier;
+      parts.push(tier);
+    }
     return parts.join(" | ") || "No criteria defined";
   };
 

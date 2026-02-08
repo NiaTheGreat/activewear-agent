@@ -3,7 +3,11 @@ import sys
 from logging.config import fileConfig
 
 from alembic import context
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
+
+# Load .env file for local development
+load_dotenv()
 
 # Make sure the app package is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -13,8 +17,14 @@ from app.models import User, CriteriaPreset, Search, Manufacturer, ContactActivi
 
 config = context.config
 
-# Override sqlalchemy.url from env var if present
+# Override sqlalchemy.url from env var (DATABASE_URL_SYNC or derived from DATABASE_URL)
 db_url = os.getenv("DATABASE_URL_SYNC")
+if not db_url:
+    raw = os.getenv("DATABASE_URL", "")
+    if raw:
+        db_url = raw.replace("postgresql+asyncpg://", "postgresql://", 1)
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
 

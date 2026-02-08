@@ -7,11 +7,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install all Python dependencies
+COPY backend/requirements.txt ./backend/requirements.txt
+COPY requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt -r requirements.txt
 
-COPY . .
+# Copy backend code
+COPY backend/ ./backend/
+
+# Copy agent source (lazily imported by agent_service.py at search time)
+COPY src/ ./src/
+COPY config/ ./config/
+
+WORKDIR /app/backend
+RUN chmod +x start.sh
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./start.sh"]
