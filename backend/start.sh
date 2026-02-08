@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Debug: verify DATABASE_URL is available
+if [ -z "$DATABASE_URL" ]; then
+    echo "WARNING: DATABASE_URL is not set!"
+else
+    echo "DATABASE_URL is set (scheme: ${DATABASE_URL%%://*})"
+fi
+
 echo "Running database migrations..."
 alembic upgrade head
 
