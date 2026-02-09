@@ -213,7 +213,7 @@ export default function OrganizationMembersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.map((member) => (
+              {members?.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell className="font-medium">
                     {member.user_email}

@@ -40,6 +40,7 @@ export function useStartSearch() {
       criteria_preset_id?: string;
       search_mode?: string;
       max_manufacturers?: number;
+      organization_id?: string;
     }) => api.search.run(data) as Promise<SearchResponse>,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["search-history"] });

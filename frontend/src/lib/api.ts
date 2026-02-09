@@ -4,12 +4,16 @@ import type {
   ManufacturerCreate,
   ContactActivityCreate,
   ContactActivityUpdate,
+  Organization,
   OrganizationCreate,
   OrganizationUpdate,
+  OrganizationMember,
   OrganizationMemberCreate,
   OrganizationMemberUpdate,
+  Pipeline,
   PipelineCreate,
   PipelineUpdate,
+  PipelineManufacturer,
   AddManufacturerToPipeline,
   UpdatePipelineManufacturer,
 } from "@/types/api";
@@ -229,13 +233,13 @@ export const api = {
       request(`/api/activities/${activityId}`, { method: "DELETE" }),
   },
   organizations: {
-    list: () => request("/api/organizations"),
+    list: () => request<Organization[]>("/api/organizations"),
     create: (data: OrganizationCreate) =>
       request("/api/organizations", {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    get: (id: string) => request(`/api/organizations/${id}`),
+    get: (id: string) => request<Organization>(`/api/organizations/${id}`),
     update: (id: string, data: OrganizationUpdate) =>
       request(`/api/organizations/${id}`, {
         method: "PUT",
@@ -245,7 +249,7 @@ export const api = {
       request(`/api/organizations/${id}`, { method: "DELETE" }),
     // Members
     listMembers: (orgId: string) =>
-      request(`/api/organizations/${orgId}/members`),
+      request<OrganizationMember[]>(`/api/organizations/${orgId}/members`),
     inviteMember: (orgId: string, data: OrganizationMemberCreate) =>
       request(`/api/organizations/${orgId}/members`, {
         method: "POST",
@@ -263,13 +267,13 @@ export const api = {
   },
   pipelines: {
     list: (orgId: string) =>
-      request(`/api/organizations/${orgId}/pipelines`),
+      request<Pipeline[]>(`/api/organizations/${orgId}/pipelines`),
     create: (orgId: string, data: PipelineCreate) =>
       request(`/api/organizations/${orgId}/pipelines`, {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    get: (id: string) => request(`/api/pipelines/${id}`),
+    get: (id: string) => request<Pipeline>(`/api/pipelines/${id}`),
     update: (id: string, data: PipelineUpdate) =>
       request(`/api/pipelines/${id}`, {
         method: "PUT",
@@ -279,7 +283,7 @@ export const api = {
       request(`/api/pipelines/${id}`, { method: "DELETE" }),
     // Pipeline-Manufacturer relationships
     listManufacturers: (pipelineId: string) =>
-      request(`/api/pipelines/${pipelineId}/manufacturers`),
+      request<PipelineManufacturer[]>(`/api/pipelines/${pipelineId}/manufacturers`),
     addManufacturer: (pipelineId: string, data: AddManufacturerToPipeline) =>
       request(`/api/pipelines/${pipelineId}/manufacturers`, {
         method: "POST",
