@@ -31,9 +31,16 @@ class Search(Base):
     __tablename__ = "searches"
     __table_args__ = (
         Index("ix_searches_user_status", "user_id", "status"),
+        Index("ix_searches_org_status", "organization_id", "status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # organization_id is NULL for personal searches, set for org searches
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE")
+    )
+    # user_id now represents "created_by" rather than "owner"
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     criteria_preset_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("criteria_presets.id", ondelete="SET NULL")
@@ -52,5 +59,6 @@ class Search(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="searches")
+    organization = relationship("Organization", back_populates="searches")
     preset = relationship("CriteriaPreset")
     manufacturers = relationship("Manufacturer", back_populates="search", cascade="all, delete-orphan")

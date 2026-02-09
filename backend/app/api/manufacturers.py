@@ -13,7 +13,12 @@ from app.database import get_db
 from app.models.manufacturer import Manufacturer
 from app.models.search import Search
 from app.models.user import User
-from app.schemas.manufacturer import ManufacturerCreate, ManufacturerResponse, ManufacturerUpdate
+from app.schemas.manufacturer import (
+    CopyToOrganizationRequest,
+    ManufacturerCreate,
+    ManufacturerResponse,
+    ManufacturerUpdate,
+)
 
 router = APIRouter(tags=["manufacturers"])
 
@@ -23,6 +28,7 @@ router = APIRouter(tags=["manufacturers"])
     response_model=list[ManufacturerResponse],
 )
 async def list_all_manufacturers(
+    organization_id: uuid.UUID | None = None,
     sort_by: Literal["match_score", "name", "created_at"] = "match_score",
     sort_dir: Literal["asc", "desc"] = "desc",
     favorites_only: bool = Query(False),
@@ -30,15 +36,42 @@ async def list_all_manufacturers(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List ALL manufacturers across all searches owned by the current user."""
-    stmt = (
-        select(Manufacturer)
-        .join(Search, Manufacturer.search_id == Search.id)
-        .where(
-            Search.user_id == current_user.id,
+    """
+    List manufacturers across searches.
+    - If organization_id provided: shows manufacturers from org searches (requires membership)
+    - If organization_id is None: shows manufacturers from personal searches only
+    """
+    stmt = select(Manufacturer).join(Search, Manufacturer.search_id == Search.id)
+
+    if organization_id is not None:
+        # Verify user is a member of the organization
+        from app.models.organization_member import OrganizationMember
+
+        result = await db.execute(
+            select(OrganizationMember).where(
+                OrganizationMember.organization_id == organization_id,
+                OrganizationMember.user_id == current_user.id,
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this organization",
+            )
+
+        # Filter to org searches
+        stmt = stmt.where(
+            Search.organization_id == organization_id,
             Manufacturer.match_score >= min_score,
         )
-    )
+    else:
+        # Filter to personal searches only
+        stmt = stmt.where(
+            Search.user_id == current_user.id,
+            Search.organization_id.is_(None),
+            Manufacturer.match_score >= min_score,
+        )
+
     if favorites_only:
         stmt = stmt.where(Manufacturer.is_favorite == True)  # noqa: E712
 
@@ -169,6 +202,123 @@ async def create_manual_manufacturer(
     db.add(mfg)
     await db.flush()
     return mfg
+
+
+@router.post(
+    "/api/manufacturers/{manufacturer_id}/copy-to-organization",
+    response_model=ManufacturerResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def copy_manufacturer_to_organization(
+    manufacturer_id: uuid.UUID,
+    body: CopyToOrganizationRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Copy a manufacturer from personal workspace to an organization.
+    - Verifies user owns the source manufacturer
+    - Verifies user is a member of the target organization
+    - Creates a duplicate in the organization's manual_entry search
+    - Optionally adds to specified pipelines
+    """
+    # Get and verify ownership of source manufacturer
+    source_mfg = await _get_owned_manufacturer(db, manufacturer_id, current_user.id)
+
+    # Verify user is a member of the target organization
+    from app.models.organization_member import OrganizationMember
+
+    result = await db.execute(
+        select(OrganizationMember).where(
+            OrganizationMember.organization_id == body.organization_id,
+            OrganizationMember.user_id == current_user.id,
+        )
+    )
+    membership = result.scalar_one_or_none()
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a member of this organization",
+        )
+
+    # Find or create a "manual_entry" search for this organization
+    result = await db.execute(
+        select(Search).where(
+            Search.organization_id == body.organization_id,
+            Search.search_mode == "manual_entry",
+        )
+    )
+    org_manual_search = result.scalar_one_or_none()
+
+    if org_manual_search is None:
+        from datetime import datetime, timezone
+
+        org_manual_search = Search(
+            user_id=current_user.id,
+            organization_id=body.organization_id,
+            criteria={},
+            search_mode="manual_entry",
+            status="completed",
+            progress=100,
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
+        )
+        db.add(org_manual_search)
+        await db.flush()
+
+    # Create a duplicate manufacturer in the organization
+    new_mfg = Manufacturer(
+        search_id=org_manual_search.id,
+        name=source_mfg.name,
+        website=source_mfg.website,
+        location=source_mfg.location,
+        contact=source_mfg.contact,
+        materials=source_mfg.materials,
+        production_methods=source_mfg.production_methods,
+        certifications=source_mfg.certifications,
+        moq=source_mfg.moq,
+        moq_description=source_mfg.moq_description,
+        notes=source_mfg.notes,
+        source_url=f"copied_from_personal:{source_mfg.id}",
+        confidence="manual",
+        match_score=source_mfg.match_score,
+        status="new",
+    )
+    db.add(new_mfg)
+    await db.flush()
+
+    # Add to pipelines if specified
+    if body.pipeline_ids:
+        from app.models.pipeline import Pipeline
+        from app.models.pipeline_manufacturer import PipelineManufacturer
+
+        # Verify all pipelines belong to the organization
+        for pipeline_id in body.pipeline_ids:
+            pipeline_result = await db.execute(
+                select(Pipeline).where(
+                    Pipeline.id == pipeline_id,
+                    Pipeline.organization_id == body.organization_id,
+                )
+            )
+            pipeline = pipeline_result.scalar_one_or_none()
+            if pipeline is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Pipeline {pipeline_id} not found in this organization",
+                )
+
+            # Add manufacturer to pipeline
+            pipeline_mfg = PipelineManufacturer(
+                pipeline_id=pipeline_id,
+                manufacturer_id=new_mfg.id,
+                added_by_user_id=current_user.id,
+            )
+            db.add(pipeline_mfg)
+
+        await db.flush()
+
+    await db.commit()
+    return new_mfg
 
 
 @router.get(

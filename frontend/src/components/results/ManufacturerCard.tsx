@@ -18,8 +18,10 @@ import { ScoringBreakdown } from "./ScoringBreakdown";
 import { FavoriteButton } from "./FavoriteButton";
 import { ContactTimeline } from "./ContactTimeline";
 import { AddActivityDialog } from "./AddActivityDialog";
-import { useUpdateManufacturer, useDeleteManufacturer } from "@/hooks/useManufacturers";
+import { useUpdateManufacturer, useDeleteManufacturer, useCopyManufacturerToOrganization } from "@/hooks/useManufacturers";
 import { useActivities } from "@/hooks/useActivities";
+import { useOrganizationStore } from "@/store/organizationStore";
+import { CopyToOrganizationDialog } from "@/components/manufacturer/CopyToOrganizationDialog";
 import { MANUFACTURER_STATUSES } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils";
 import type { Manufacturer } from "@/types/api";
@@ -41,6 +43,7 @@ import {
   CalendarClock,
   MessageSquarePlus,
   Kanban,
+  Copy,
 } from "lucide-react";
 
 interface ManufacturerCardProps {
@@ -61,6 +64,8 @@ export function ManufacturerCard({
   const [tags, setTags] = useState<string[]>(mfg.user_tags || []);
   const updateMfg = useUpdateManufacturer();
   const deleteMfg = useDeleteManufacturer();
+  const copyToOrg = useCopyManufacturerToOrganization();
+  const { isPersonalWorkspace } = useOrganizationStore();
 
   // Sync when a different manufacturer is opened
   if (initialMfg.id !== mfg.id) {
@@ -151,6 +156,31 @@ export function ManufacturerCard({
       onClose();
     } catch {
       toast.error("Failed to delete manufacturer");
+    }
+  };
+
+  const handleCopyToOrganization = async (
+    organizationId: string,
+    pipelineIds?: string[]
+  ) => {
+    try {
+      await copyToOrg.mutateAsync({
+        manufacturerId: mfg.id,
+        organizationId,
+        pipelineIds,
+      });
+      toast.success(
+        `Copied "${mfg.name}" to organization${
+          pipelineIds && pipelineIds.length > 0
+            ? ` and added to ${pipelineIds.length} pipeline(s)`
+            : ""
+        }`
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to copy manufacturer"
+      );
+      throw error; // Re-throw so dialog knows it failed
     }
   };
 
@@ -595,6 +625,34 @@ export function ManufacturerCard({
           )}
 
           <Separator />
+
+          {/* Copy to Organization (only for personal manufacturers) */}
+          {isPersonalWorkspace() && (
+            <>
+              <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-300 bg-blue-50/50 p-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    Share with your team
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Copy this manufacturer to an organization workspace
+                  </p>
+                </div>
+                <CopyToOrganizationDialog
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Copy className="mr-1 h-3 w-3" />
+                      Copy to Team
+                    </Button>
+                  }
+                  manufacturerName={mfg.name}
+                  onCopy={handleCopyToOrganization}
+                  isPending={copyToOrg.isPending}
+                />
+              </div>
+              <Separator />
+            </>
+          )}
 
           {/* Pipeline */}
           {mfg.status == null ? (

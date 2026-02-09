@@ -38,6 +38,7 @@ export interface SearchCriteria {
 export interface SearchResponse {
   id: string;
   user_id: string;
+  organization_id: string | null;
   criteria_preset_id: string | null;
   criteria: SearchCriteria;
   search_queries: Record<string, unknown> | null;
@@ -179,4 +180,106 @@ export interface ContactActivityUpdate {
   content?: string | null;
   contact_date?: string;
   reminder_date?: string | null;
+}
+
+// ========== Organization Types ==========
+
+export type OrganizationRole = "owner" | "admin" | "member" | "viewer";
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  created_by_user_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  member_count?: number;
+}
+
+export interface OrganizationCreate {
+  name: string;
+  slug: string;
+  description?: string;
+}
+
+export interface OrganizationUpdate {
+  name?: string;
+  description?: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  role: OrganizationRole;
+  joined_at: string;
+  user_email?: string;
+  user_full_name?: string | null;
+}
+
+export interface OrganizationMemberCreate {
+  email: string;
+  role?: OrganizationRole;
+}
+
+export interface OrganizationMemberUpdate {
+  role: OrganizationRole;
+}
+
+// ========== Pipeline Types ==========
+
+export interface Pipeline {
+  id: string;
+  organization_id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  icon: string | null;
+  is_default: boolean;
+  created_by_user_id: string;
+  created_at: string;
+  updated_at: string;
+  manufacturer_count?: number;
+}
+
+export interface PipelineCreate {
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  is_default?: boolean;
+}
+
+export interface PipelineUpdate {
+  name?: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  is_default?: boolean;
+}
+
+export interface PipelineManufacturer {
+  id: string;
+  pipeline_id: string;
+  manufacturer_id: string;
+  added_by_user_id: string;
+  added_at: string;
+  pipeline_notes: string | null;
+  pipeline_status: string | null;
+  priority: number | null;
+}
+
+export interface AddManufacturerToPipeline {
+  manufacturer_id: string;
+  pipeline_notes?: string;
+  pipeline_status?: string;
+  priority?: number;
+}
+
+export interface UpdatePipelineManufacturer {
+  pipeline_notes?: string;
+  pipeline_status?: string;
+  priority?: number;
 }

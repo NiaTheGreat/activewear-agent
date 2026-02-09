@@ -25,9 +25,30 @@ async def start_search(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Start a new manufacturer search. The agent runs in the background."""
+    """
+    Start a new manufacturer search. The agent runs in the background.
+    If organization_id is provided, creates an org search visible to all members.
+    Otherwise, creates a personal search.
+    """
+    # If organization_id is provided, verify user is a member
+    if body.organization_id is not None:
+        from app.models.organization_member import OrganizationMember
+
+        result = await db.execute(
+            select(OrganizationMember).where(
+                OrganizationMember.organization_id == body.organization_id,
+                OrganizationMember.user_id == current_user.id,
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this organization",
+            )
+
     search = Search(
         user_id=current_user.id,
+        organization_id=body.organization_id,
         criteria_preset_id=body.criteria_preset_id,
         criteria=body.criteria,
         search_mode=body.search_mode,
@@ -75,15 +96,48 @@ async def get_search_status(
 
 @router.get("/history", response_model=list[SearchResponse])
 async def search_history(
+    organization_id: uuid.UUID | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List the current user's past searches."""
-    result = await db.execute(
-        select(Search)
-        .where(Search.user_id == current_user.id)
-        .order_by(Search.created_at.desc())
-    )
+    """
+    List searches accessible to the current user.
+    - If organization_id is provided: shows org searches (requires membership)
+    - If organization_id is None: shows personal searches only
+    """
+    if organization_id is not None:
+        # Verify user is a member of the organization
+        from app.models.organization_member import OrganizationMember
+
+        result = await db.execute(
+            select(OrganizationMember).where(
+                OrganizationMember.organization_id == organization_id,
+                OrganizationMember.user_id == current_user.id,
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this organization",
+            )
+
+        # Return org searches
+        result = await db.execute(
+            select(Search)
+            .where(Search.organization_id == organization_id)
+            .order_by(Search.created_at.desc())
+        )
+    else:
+        # Return personal searches only
+        result = await db.execute(
+            select(Search)
+            .where(
+                Search.user_id == current_user.id,
+                Search.organization_id.is_(None),
+            )
+            .order_by(Search.created_at.desc())
+        )
+
     return result.scalars().all()
 
 

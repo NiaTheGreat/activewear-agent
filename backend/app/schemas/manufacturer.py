@@ -110,3 +110,9 @@ class ManufacturerUpdate(BaseModel):
         if v is not None and v not in valid:
             raise ValueError(f"Status must be one of: {', '.join(valid)}")
         return v
+
+
+class CopyToOrganizationRequest(BaseModel):
+    """Request body for copying a manufacturer to an organization."""
+    organization_id: uuid.UUID
+    pipeline_ids: list[uuid.UUID] | None = None

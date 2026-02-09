@@ -27,3 +27,4 @@ class User(Base):
 
     presets = relationship("CriteriaPreset", back_populates="user", cascade="all, delete-orphan")
     searches = relationship("Search", back_populates="user", cascade="all, delete-orphan")
+    organization_memberships = relationship("OrganizationMember", back_populates="user", cascade="all, delete-orphan")

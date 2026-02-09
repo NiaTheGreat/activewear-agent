@@ -37,6 +37,7 @@ class SearchCreate(BaseModel):
     criteria_preset_id: uuid.UUID | None = None
     search_mode: str = "auto"
     max_manufacturers: int = 10
+    organization_id: uuid.UUID | None = None  # If set, creates an org search
 
 
 class SearchStatus(BaseModel):
@@ -56,6 +57,7 @@ class SearchStatus(BaseModel):
 class SearchResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
+    organization_id: uuid.UUID | None  # NULL = personal search, set = org search
     criteria_preset_id: uuid.UUID | None
     criteria: dict[str, Any]
     search_queries: dict[str, Any] | None

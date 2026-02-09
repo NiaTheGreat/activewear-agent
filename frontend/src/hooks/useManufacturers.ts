@@ -76,3 +76,40 @@ export function useDeleteManufacturer() {
     },
   });
 }
+
+export function useCopyManufacturerToOrganization() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      manufacturerId,
+      organizationId,
+      pipelineIds,
+    }: {
+      manufacturerId: string;
+      organizationId: string;
+      pipelineIds?: string[];
+    }) =>
+      api.manufacturers.copyToOrganization(manufacturerId, {
+        organization_id: organizationId,
+        pipeline_ids: pipelineIds,
+      }) as Promise<Manufacturer>,
+    onSuccess: (data, variables) => {
+      // Invalidate manufacturers list for the target organization
+      queryClient.invalidateQueries({
+        queryKey: ["manufacturers", "all", { organization_id: variables.organizationId }],
+      });
+      // Invalidate pipelines to update manufacturer counts
+      queryClient.invalidateQueries({
+        queryKey: ["organizations", variables.organizationId, "pipelines"],
+      });
+      // If added to specific pipelines, invalidate those too
+      if (variables.pipelineIds) {
+        variables.pipelineIds.forEach((pipelineId) => {
+          queryClient.invalidateQueries({
+            queryKey: ["pipelines", pipelineId, "manufacturers"],
+          });
+        });
+      }
+    },
+  });
+}

@@ -48,3 +48,8 @@ class Manufacturer(Base):
 
     search = relationship("Search", back_populates="manufacturers")
     activities = relationship("ContactActivity", back_populates="manufacturer", cascade="all, delete-orphan")
+    pipeline_manufacturers = relationship(
+        "PipelineManufacturer",
+        back_populates="manufacturer",
+        cascade="all, delete-orphan"
+    )
