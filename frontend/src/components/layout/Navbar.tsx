@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MobileNav } from "./MobileNav";
 import { Search, User, LogOut, Settings } from "lucide-react";
 
 export function Navbar() {
@@ -17,18 +18,21 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-md">
-      <div className="flex h-16 items-center justify-between px-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
-            <Search className="h-4 w-4 text-white" />
-          </div>
-          <span className="font-semibold text-gray-900 tracking-tight">
-            Manufacturer Agent
-          </span>
-        </Link>
-
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <Link href="/search/new">
+          <MobileNav />
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+              <Search className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-semibold text-gray-900 tracking-tight">
+              Manufacturer Agent
+            </span>
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/search/new" className="hidden sm:block">
             <Button size="sm">New Search</Button>
           </Link>
 
