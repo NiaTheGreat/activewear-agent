@@ -197,7 +197,7 @@ export default function OrganizationMembersPage() {
           <div className="p-8 text-center text-sm text-muted-foreground">
             Loading members...
           </div>
-        ) : !members || members.length === 0 ? (
+        ) : !members || members?.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             No members found. Invite someone to get started!
           </div>
